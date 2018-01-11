@@ -1,0 +1,8 @@
+venv/
+.DS_Store
+.vscode/
+.idea/
+*.py[cod]
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
