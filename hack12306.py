@@ -204,7 +204,7 @@ class HackTickets(object):
         count = 0
         while self.driver.url == self.ticket_url:
             # 勾选车次类型，发车时间
-            self.searchMore();
+            self.searchMore()
             sleep(0.05)
             self.driver.find_by_text(u"查询").click()
             count += 1
