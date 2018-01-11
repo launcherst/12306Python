@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+import sys, codecs, argparse, os, time
+from splinter.browser import Browser
+from configparser import ConfigParser
+from time import sleep
+
 """
 @time: 2018-01-04
 @author: ssf
@@ -16,23 +21,13 @@ Example:
     python hack12306.py
 """
 
-from splinter.browser import Browser
-from configparser import ConfigParser
-from time import sleep
-import traceback
-import time, sys
-import codecs
-import argparse
-import os
-import time
-
 
 class HackTickets(object):
     """docstring for hackTickets"""
 
     """读取配置文件"""
 
-    def readConfig(self, config_file='config.ini'):
+    def read_config(self, config_file='config.ini'):
         print("加载配置文件...")
         # 补充文件路径，获得config.ini的绝对路径，默认为主程序当前目录
         path = os.path.join(os.getcwd(), config_file)
@@ -53,14 +48,10 @@ class HackTickets(object):
         # 始发站
         starts_city = cp.get("cookieInfo", "starts")
         # config.ini配置的是中文，转换成"武汉,WHN"，再进行编码
-        self.starts = self.convertCityToCode(starts_city).encode('unicode_escape').decode("utf-8").replace("\\u",
-                                                                                                           "%u").replace(
-            ",", "%2c")
+        self.starts = self.convert_city_to_code(starts_city).encode('unicode_escape').decode("utf-8").replace("\\u","%u").replace(",", "%2c")
         # 终点站
-        ends_city = cp.get("cookieInfo", "ends");
-        self.ends = self.convertCityToCode(ends_city).encode('unicode_escape').decode("utf-8").replace("\\u",
-                                                                                                       "%u").replace(
-            ",", "%2c")
+        ends_city = cp.get("cookieInfo", "ends")
+        self.ends = self.convert_city_to_code(ends_city).encode('unicode_escape').decode("utf-8").replace("\\u", "%u").replace(",", "%2c")
         # 乘车时间
         self.dtime = cp.get("cookieInfo", "dtime")
         # 车次
@@ -88,22 +79,22 @@ class HackTickets(object):
         # 浏览器驱动（目前使用的是chromedriver）路径
         self.executable_path = cp.get("pathInfo", "executable_path")
 
-    def loadConfig(self):
+    def load_config(self):
         parser = argparse.ArgumentParser()
         parser.add_argument('-c', '--config', help='Specify config file, use absolute path')
         args = parser.parse_args()
         if args.config:
             # 使用指定的配置文件
-            self.readConfig(args.config)
+            self.read_config(args.config)
         else:
             # 使用默认的配置文件config.ini
-            self.readConfig()
+            self.read_config()
 
     """
         加载映射文件，并将中文"武汉"转换成编码后的格式：“武汉,WHN“
     """
 
-    def loadCityCode(self):
+    def load_city_code(self):
         print("映射出发地、目的地...")
         city_codes = {}
         path = os.path.join(os.getcwd(), 'city_code.txt')
@@ -114,7 +105,7 @@ class HackTickets(object):
                 city_codes[city] = city + "," + code
         return city_codes
 
-    def convertCityToCode(self, c):
+    def convert_city_to_code(self, c):
         try:
             return self.city_codes[c]
         except KeyError:
@@ -123,7 +114,7 @@ class HackTickets(object):
 
     """加载席别编码"""
 
-    def loadSeatType(self):
+    def load_seat_type(self):
         self.seatMap = {
             "硬座": "1",
             "硬卧": "3",
@@ -139,13 +130,13 @@ class HackTickets(object):
 
     def __init__(self):
         # 读取城市中文与三字码映射文件，获得转换后到城市信息-- “武汉”: "武汉,WHN"
-        self.city_codes = self.loadCityCode();
+        self.city_codes = self.load_city_code()
 
         # 加载席别
-        self.loadSeatType()
+        self.load_seat_type()
 
         # 读取配置文件，获得初始化参数
-        self.loadConfig()
+        self.load_config()
 
     def login(self):
         print("开始登录...")
@@ -167,9 +158,9 @@ class HackTickets(object):
 
     """更多查询条件"""
 
-    def searchMore(self):
+    def search_more(self):
         # 选择车次类型
-        for type in self.train_types:
+        for train_type in self.train_types:
             # 车次类型选择
             train_type_dict = {'T': u'T-特快',  # 特快
                                'G': u'GC-高铁/城际',  # 高铁
@@ -177,11 +168,11 @@ class HackTickets(object):
                                'Z': u'Z-直达',  # 直达
                                'K': u'K-快速'  # 快速
                                }
-            if type == 'T' or type == 'G' or type == 'D' or type == 'Z' or type == 'K':
-                print(u'--------->选择的车次类型', train_type_dict[type])
-                self.driver.find_by_text(train_type_dict[type]).click()
+            if train_type == 'T' or train_type == 'G' or train_type == 'D' or train_type == 'Z' or train_type == 'K':
+                print(u'--------->选择的车次类型', train_type_dict[train_type])
+                self.driver.find_by_text(train_type_dict[train_type]).click()
             else:
-                print(u"车次类型异常或未选择!(train_type=%s)" % type)
+                print(u"车次类型异常或未选择!(train_type=%s)" % train_type)
 
         # 选择发车时间
         print(u'--------->选择的发车时间', self.start_time)
@@ -191,7 +182,8 @@ class HackTickets(object):
             print(u"未指定发车时间，默认00:00-24:00")
 
     """填充查询条件"""
-    def preStart(self):
+
+    def pre_start(self):
         # 加载查询信息
         # 出发地
         self.driver.cookies.add({"_jc_save_fromStation": self.starts})
@@ -200,11 +192,11 @@ class HackTickets(object):
         # 出发日
         self.driver.cookies.add({"_jc_save_fromDate": self.dtime})
 
-    def specifyTrainNo(self):
+    def specify_train_no(self):
         count = 0
         while self.driver.url == self.ticket_url:
             # 勾选车次类型，发车时间
-            self.searchMore()
+            self.search_more()
             sleep(0.05)
             self.driver.find_by_text(u"查询").click()
             count += 1
@@ -218,11 +210,11 @@ class HackTickets(object):
                 print(u"还没开始预订")
                 continue
 
-    def buyOrderZero(self):
+    def buy_order_zero(self):
         count = 0
         while self.driver.url == self.ticket_url:
             # 勾选车次类型，发车时间
-            self.searchMore();
+            self.search_more()
             sleep(0.05)
             self.driver.find_by_text(u"查询").click()
             count += 1
@@ -239,37 +231,37 @@ class HackTickets(object):
                 print(u"还没开始预订 %s" % count)
                 continue
 
-    def selUser(self):
+    def sel_user(self):
         print(u'开始选择用户...')
         for user in self.users:
             self.driver.find_by_text(user).last.click()
 
-    def confirmOrder(self):
+    def confirm_order(self):
         print(u"选择席别...")
         if self.seatType:
             self.driver.find_by_value(self.seatType).click()
         else:
             print(u"未指定席别，按照12306默认席别")
 
-    def submitOrder(self):
+    def submit_order(self):
         print(u"提交订单...")
         sleep(1)
 
         self.driver.find_by_id('submitOrder_id').click()
 
-    def confirmSeat(self):
+    def confirm_seat(self):
         # 若提交订单异常，请适当加大sleep的时间
         sleep(1)
         print(u"确认选座...")
         self.driver.find_by_id('qr_submit_id').click()
 
-    def buyTickets(self):
+    def buy_tickets(self):
         t = time.clock()
         try:
             print(u"购票页面开始...")
 
             # 填充查询条件
-            self.preStart()
+            self.pre_start()
 
             # 带着查询条件，重新加载页面
             self.driver.reload()
@@ -277,21 +269,21 @@ class HackTickets(object):
             # 预定车次算法：根据order的配置确定开始点击预订的车次，0-从上至下点击，1-第一个车次，2-第二个车次，类推
             if self.order != 0:
                 # 指定车次预订
-                self.specifyTrainNo()
+                self.specify_train_no()
             else:
                 # 默认选票
-                self.buyOrderZero()
+                self.buy_order_zero()
             print(u"开始预订...")
 
             sleep(0.8)
             # 选择用户
-            self.selUser()
+            self.sel_user()
             # 确认订单
-            self.confirmOrder()
+            self.confirm_order()
             # 提交订单
-            self.submitOrder()
+            self.submit_order()
             # 确认选座
-            # self.confirmSeat()
+            # self.confirm_seat()
 
             print(time.clock() - t)
 
@@ -313,7 +305,7 @@ class HackTickets(object):
         self.driver.visit(self.ticket_url)
 
         # 自动购买车票
-        self.buyTickets();
+        self.buy_tickets()
 
 
 if __name__ == '__main__':
