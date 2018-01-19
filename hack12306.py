@@ -38,7 +38,7 @@ class HackTickets(object):
             # cp.readfp(codecs.open(config_file, "r", "utf-8-sig"))
             cp.read_file(codecs.open(path, "r", "utf-8-sig"))
         except IOError as e:
-            print(u'打开配置文件"%s"失败, 请先创建或者拷贝一份配置文件config.ini' % (config_file))
+            print(u'打开配置文件"%s"失败, 请先创建或者拷贝一份配置文件config.ini' % config_file)
             input('Press any key to continue')
             sys.exit()
         # 登录名

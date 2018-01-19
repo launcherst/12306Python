@@ -6,3 +6,5 @@ venv/
 Thumbs.db
 Desktop.ini
 $RECYCLE.BIN/
+chromedriver.exe
+srca.cer
